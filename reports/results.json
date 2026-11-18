@@ -1,0 +1,162 @@
+{
+  "sizes": {
+    "train": 118016,
+    "val": 14752,
+    "test": 14753
+  },
+  "label_share": {
+    "Egyptian": 0.3904,
+    "Libyan": 0.247,
+    "Lebanese": 0.1871,
+    "Sudanese": 0.0974,
+    "Moroccan": 0.0782
+  },
+  "models": {
+    "Always Egyptian": {
+      "val": {
+        "accuracy": 0.3904,
+        "macro_f1": 0.1123
+      }
+    },
+    "Naive Bayes (words)": {
+      "best_param": 0.03,
+      "val": {
+        "accuracy": 0.8477,
+        "macro_f1": 0.8145
+      },
+      "tried": {
+        "0.03": {
+          "accuracy": 0.8477,
+          "macro_f1": 0.8145
+        },
+        "0.1": {
+          "accuracy": 0.8471,
+          "macro_f1": 0.8109
+        },
+        "0.3": {
+          "accuracy": 0.8275,
+          "macro_f1": 0.7745
+        },
+        "1.0": {
+          "accuracy": 0.7614,
+          "macro_f1": 0.6532
+        }
+      }
+    },
+    "Logistic Regression (words)": {
+      "best_param": 10,
+      "val": {
+        "accuracy": 0.8448,
+        "macro_f1": 0.8135
+      },
+      "tried": {
+        "1": {
+          "accuracy": 0.8332,
+          "macro_f1": 0.7935
+        },
+        "3": {
+          "accuracy": 0.8428,
+          "macro_f1": 0.8096
+        },
+        "10": {
+          "accuracy": 0.8448,
+          "macro_f1": 0.8135
+        }
+      }
+    },
+    "Linear SVM (words)": {
+      "best_param": 1.0,
+      "val": {
+        "accuracy": 0.846,
+        "macro_f1": 0.8146
+      },
+      "tried": {
+        "0.05": {
+          "accuracy": 0.8139,
+          "macro_f1": 0.7662
+        },
+        "0.1": {
+          "accuracy": 0.8308,
+          "macro_f1": 0.7898
+        },
+        "0.3": {
+          "accuracy": 0.8448,
+          "macro_f1": 0.811
+        },
+        "1.0": {
+          "accuracy": 0.846,
+          "macro_f1": 0.8146
+        }
+      }
+    },
+    "Linear SVM (characters)": {
+      "best_param": 1.0,
+      "val": {
+        "accuracy": 0.8551,
+        "macro_f1": 0.8254
+      },
+      "tried": {
+        "0.05": {
+          "accuracy": 0.8297,
+          "macro_f1": 0.7873
+        },
+        "0.1": {
+          "accuracy": 0.8429,
+          "macro_f1": 0.8056
+        },
+        "0.3": {
+          "accuracy": 0.8534,
+          "macro_f1": 0.8225
+        },
+        "1.0": {
+          "accuracy": 0.8551,
+          "macro_f1": 0.8254
+        }
+      }
+    },
+    "Linear SVM (words + characters)": {
+      "best_param": 1.0,
+      "val": {
+        "accuracy": 0.8627,
+        "macro_f1": 0.8349
+      },
+      "tried": {
+        "0.05": {
+          "accuracy": 0.8505,
+          "macro_f1": 0.8154
+        },
+        "0.1": {
+          "accuracy": 0.8596,
+          "macro_f1": 0.8276
+        },
+        "0.3": {
+          "accuracy": 0.8642,
+          "macro_f1": 0.8347
+        },
+        "1.0": {
+          "accuracy": 0.8627,
+          "macro_f1": 0.8349
+        }
+      }
+    }
+  },
+  "picked": {
+    "model": "Linear SVM (words + characters)",
+    "param": 1.0
+  },
+  "test": {
+    "accuracy": 0.8646,
+    "macro_f1": 0.8355,
+    "recall": {
+      "Egyptian": 0.934,
+      "Libyan": 0.8557,
+      "Lebanese": 0.8833,
+      "Sudanese": 0.6882,
+      "Moroccan": 0.7216
+    }
+  },
+  "test_always_egyptian": {
+    "accuracy": 0.3904,
+    "macro_f1": 0.1123
+  }
+}
