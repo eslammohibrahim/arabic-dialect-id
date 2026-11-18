@@ -2,9 +2,9 @@
 
 [![tests](https://github.com/eslammohibrahim/arabic-dialect-id/actions/workflows/tests.yml/badge.svg)](https://github.com/eslammohibrahim/arabic-dialect-id/actions/workflows/tests.yml)
 
-Give it a sentence in Arabic and it guesses where the writer is from: Egypt, Libya, Lebanon, Sudan or Morocco. It was trained on about 118 thousand tweets.
+As an Egyptian I can usually tell where someone is from after one sentence. I wanted to know if a plain linear model could do the same, so I trained one on Arabic tweets from five countries: Egypt, Libya, Lebanon, Sudan and Morocco.
 
-On 14,753 test tweets it never saw, it gets 86.5% right (0.836 macro F1). Saying "Egyptian" for every tweet would already get 39%, because Egyptian is the biggest class, so I picked models by macro F1 and not accuracy.
+It got 86.5% of the test tweets right (14,753 tweets, macro F1 0.836). That number needs some context though. Egyptian tweets are 39% of the data, so a "model" that answers Egyptian every time already gets 39% without reading anything. That's why I compared models with macro F1 instead.
 
 ```text
 $ python src/predict.py
@@ -15,13 +15,11 @@ Moroccan  | واش نتا بخير؟ بغيت نشوفك غدا
 Sudanese  | انت داير شنو؟ زول ما عندو موضوع
 ```
 
-I wrote these five sentences myself to check it works. They're easy on purpose, real tweets are harder.
+I made up these sentences myself and yes, they're the easy kind. Real tweets are messier.
 
 ## Data
 
-[Arabic Dialectical Tweets](https://huggingface.co/datasets/amgadhasan/arabic_tweets_dialects) on Hugging Face (MIT license), 147,725 tweets, each labeled with one country. `src/data.py` downloads it the first time you run anything, it isn't stored in this repo.
-
-The classes are not balanced at all:
+[Arabic Dialectical Tweets](https://huggingface.co/datasets/amgadhasan/arabic_tweets_dialects) from Hugging Face, MIT license, 147,725 tweets with a country label each. It's not in the repo; `src/data.py` grabs it on the first run.
 
 | Dialect | Share of train |
 |---|---|
@@ -31,11 +29,11 @@ The classes are not balanced at all:
 | Sudanese | 9.7% |
 | Moroccan | 7.8% |
 
-Cleaning removed very little. I normalized the text first (same steps as my [sentiment project](https://github.com/eslammohibrahim/arabic-sentiment-analysis): diacritics, alef forms, stretched letters, mentions and links), then dropped tweets under 3 words (116), tweets that appear with two different dialects (44) and duplicates (44). That left 147,521, split 80/10/10 with the same dialect shares in each part.
+I reused the text normalization from my [sentiment project](https://github.com/eslammohibrahim/arabic-sentiment-analysis) (tashkeel, the different alefs, stretched letters, mentions, links). After that I threw out 116 tweets with less than 3 words, 44 that showed up under two different countries, and 44 duplicates. Honestly expected way more duplicates from a Twitter dataset. 147,521 left, split 80/10/10.
 
 ## Models
 
-Every model got a small search over one setting on the validation set. Features are TF-IDF on words (1-2 grams) or characters (2-5 grams inside words).
+TF-IDF on words (1-2 grams) or on characters (2-5 grams), and each model got a few values of its main setting tried on validation.
 
 | Model | Val accuracy | Val macro F1 |
 |---|---|---|
@@ -46,9 +44,11 @@ Every model got a small search over one setting on the validation set. Features 
 | Linear SVM, characters | 85.5% | 0.825 |
 | Linear SVM, words + characters | 86.3% | 0.835 |
 
-Characters beat words, which I think makes sense for dialects. A lot of the difference is in small pieces glued to words, like the "b" in Egyptian "بيعمل" or "عم" before the verb in Lebanese, and the same word gets spelled in many ways on Twitter. Using both was best, so I retrained that one on train + validation and tested it once.
+Naive Bayes being as good as logistic regression surprised me a bit, and it trains in under a second.
 
-## Results on the test set
+Characters did better than words. My guess: dialects differ a lot in little prefixes stuck to the verb. Egyptians say بيعمل, Lebanese say عم يعمل, and on Twitter nobody spells anything the same way twice, so whole words are noisy. The combined one won, I retrained it on train+val and ran the test set one time.
+
+## Test results
 
 | Dialect | Recall |
 |---|---|
@@ -60,11 +60,11 @@ Characters beat words, which I think makes sense for dialects. A lot of the diff
 
 ![Confusion matrix](reports/figures/confusion_matrix.png)
 
-The two smallest classes are the weakest. 17% of Sudanese tweets get called Egyptian, which isn't too surprising since Sudanese shares a lot of words with Egyptian (مش, كدا, دا), and Egyptian has four times more examples. Moroccan tweets get split between Egyptian and Libyan. I tried nothing for the imbalance yet (class weights would be the first thing to try).
+Sudanese is the worst. 17% of Sudanese tweets get labeled Egyptian, and when I looked at them it's not crazy, the two share مش and كدا and دا, plus there are 4x more Egyptian tweets to learn from. Moroccan mistakes go to Egyptian and Libyan about equally. I haven't done anything about the imbalance yet, class weights are next.
 
-## What the model looks at
+## What it learned
 
-The words with the biggest weight for each dialect, from the word part of the model:
+Top words per dialect (word features only):
 
 | Dialect | Top words |
 |---|---|
@@ -74,22 +74,22 @@ The words with the biggest weight for each dialect, from the word part of the mo
 | Moroccan | واش, حيت, هاد, ديال, ملي, اخويا |
 | Sudanese | ديل, ياخ, دا, ساي, لامن, عديل |
 
-Most of these are real dialect words that any speaker would point to. But some aren't. "مصر" is a top Egyptian word, and "الاتحاد النصر" (two football clubs) is a top Moroccan one. So part of what the model learned is the topics people from each country tweet about, not only how they talk. A tweet about Egyptian football written in Lebanese dialect could fool it.
+Mostly the words you'd expect. The funny ones: مصر is one of the top Egyptian words, and the Moroccan list has الاتحاد النصر, which are football clubs. So the model partly learned what each country tweets about, not just how people talk. Write about Egyptian football in Lebanese and it'll probably get confused.
 
 ## Run it
 
 ```bash
 pip install -r requirements.txt
-python src/train.py      # downloads the data, compares models, saves models/dialect_model.joblib (about 5 min on my laptop CPU)
+python src/train.py      # downloads data, trains everything, saves models/dialect_model.joblib (few minutes on CPU)
 python src/predict.py "ازيك عامل ايه"
 pytest -q
 ```
 
 ## Limitations
 
-- Only five dialects. Gulf, Levantine other than Lebanese, Iraqi and others aren't in the data, so a Saudi tweet will still get one of the five labels.
-- The dataset card doesn't say how the labels were made. Reading through it, some tweets are in plain MSA with nothing dialect-specific, so no model can get those right except by topic.
-- It's trained on tweets, so very short or very formal sentences are harder.
+- Five dialects only. A Saudi or Iraqi tweet still gets one of these five.
+- No idea how the labels were made, the dataset card doesn't say. Some tweets are just MSA, and for those the label can only be guessed from the topic.
+- Trained on tweets. Very short or very formal text is harder.
 
 ## License
 
